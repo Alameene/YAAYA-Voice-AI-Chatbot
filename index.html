@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -25,6 +24,19 @@
       overflow-y: auto;
       text-align: left;
     }
+    .chat-entry {
+      margin-bottom: 1rem;
+    }
+    .input-area {
+      margin-top: 1.5rem;
+    }
+    input[type="text"] {
+      padding: 0.5rem;
+      width: 60%;
+      border-radius: 5px;
+      border: none;
+      font-size: 1rem;
+    }
     button {
       background-color: #00d1ff;
       color: black;
@@ -33,6 +45,7 @@
       border-radius: 5px;
       font-size: 1rem;
       cursor: pointer;
+      margin-left: 1rem;
     }
     button:hover {
       background-color: #00a6cc;
@@ -41,37 +54,20 @@
 </head>
 <body>
   <h1>Meet YAAYA 🤖</h1>
-  <p>Click below and speak your mind!</p>
-  <button onclick="startListening()">🎙️ Talk to YAAYA</button>
+  <p>Type your message or question below:</p>
 
   <div id="chat-log"></div>
+
+  <div class="input-area">
+    <input type="text" id="user-input" placeholder="Ask Yaaya anything...">
+    <button onclick="sendMessage()">Send</button>
+  </div>
 
   <script>
     function addToChatLog(message, fromYaaya = false) {
       const log = document.getElementById('chat-log');
       const entry = document.createElement('div');
-      entry.style.marginBottom = "1rem";
+      entry.classList.add('chat-entry');
       entry.innerHTML = `<strong>${fromYaaya ? "YAAYA" : "You"}:</strong> ${message}`;
       log.appendChild(entry);
-      log.scrollTop = log.scrollHeight;
-    }
-
-    function startListening() {
-      addToChatLog("🎤 Listening...");
-      fetch('/listen')
-        .then(response => response.json())
-        .then(data => {
-          addToChatLog(data.reply, true);
-        })
-        .catch(error => {
-          addToChatLog("Error: " + error, true);
-        });
-    }
-
-    // Initial greeting from Yaaya
-    window.onload = function () {
-      addToChatLog("I am Yaaya, how can I help you?", true);
-    };
-  </script>
-</body>
 </html>
