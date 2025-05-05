@@ -1,11 +1,14 @@
 import os
 from flask import Flask, jsonify, request, send_from_directory
-import openai
 from gtts import gTTS
+import openai
+
+# Initialize OpenAI client using the new API format and making sure it works on Render
+client = openai.OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY")  # Ensure this is set in your Render environment
+)
 
 app = Flask(__name__)
-
-openai.api_key = os.getenv("0492Lamanee.")  # Replace with your actual key in Render environment vars
 
 @app.route('/')
 def index():
@@ -17,20 +20,24 @@ def chat():
     user_message = data.get("message", "")
 
     try:
+        # Predefined responses
         if "who created you" in user_message.lower():
             reply = "I was created by a programmer named AL-AMEEN."
         elif "where" in user_message.lower() and ("from" in user_message.lower() or "location" in user_message.lower()):
             reply = "I am based in Abuja, Nigeria."
         else:
-            reply = openai.ChatCompletion.create(
+            chat_response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are Yaaya, a helpful AI assistant."},
                     {"role": "user", "content": user_message}
                 ]
-            ).choices[0].message.content.strip()
-            reply = f"I am Yaaya. {reply} I was created by a programmer named AL-AMEEN in Abuja, Nigeria."
+            )
 
+            response_content = chat_response.choices[0].message.content.strip()
+            reply = f"I am Yaaya. {response_content} I was created by a programmer named AL-AMEEN in Abuja, Nigeria."
+
+        # Generate audio response (optional)
         tts = gTTS(reply)
         tts.save("response.mp3")
 
