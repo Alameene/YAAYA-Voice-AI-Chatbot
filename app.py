@@ -5,7 +5,7 @@ import openai
 
 # Initialize OpenAI client using the new API format and making sure it works on Render
 client = openai.OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")  # Ensure this is set in your Render environment
+    api_key=os.getenv("0492Lamanee.")  # Ensure this is set in your Render environment
 )
 
 app = Flask(__name__)
