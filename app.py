@@ -6,8 +6,8 @@ import speech_recognition as sr
 
 app = Flask(__name__)
 
-# Load OpenAI API key from environment variable
 openai.api_key = os.getenv("0492Lamanee.")
+# Replace with your real key
 
 engine = pyttsx3.init()
 
