@@ -1,4 +1,4 @@
-
+import os
 from flask import Flask, jsonify, send_from_directory
 import openai
 import pyttsx3
@@ -6,7 +6,9 @@ import speech_recognition as sr
 
 app = Flask(__name__)
 
-openai.api_key = "your-openai-api-key"  # Replace with your real key
+# Load OpenAI API key from environment variable
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
 engine = pyttsx3.init()
 
 @app.route('/')
@@ -34,11 +36,14 @@ def listen_and_respond():
     # Get GPT response
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": command}]
+        messages=[
+            {"role": "system", "content": "You are Yaaya, a helpful AI assistant."},
+            {"role": "user", "content": command}
+        ]
     ).choices[0].message.content.strip()
 
     # Add AL-AMEEN signature
-    response += " I was created by a software engineer named AL-AMEEN in Abuja, Nigeria."
+    response = f"I am Yaaya. {response} I was created by a software engineer named AL-AMEEN in Abuja, Nigeria."
 
     # Speak the reply
     engine.say(response)
@@ -46,6 +51,7 @@ def listen_and_respond():
 
     return jsonify(reply=response)
 
+# This part ensures Render uses the correct host/port
 if __name__ == '__main__':
-    app.run(debug=True)
-
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
