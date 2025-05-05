@@ -1,50 +1,44 @@
 import os
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory
 import openai
 from gtts import gTTS
-import speech_recognition as sr
 
 app = Flask(__name__)
 
-openai.api_key = os.getenv("0492Lamanee.")  # set this in Render environment variables
+openai.api_key = os.getenv("0492Lamanee.")  # Replace with your actual key in Render environment vars
 
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
 
-@app.route('/listen')
-def listen_and_respond():
-    recognizer = sr.Recognizer()
+@app.route('/chat', methods=['POST'])
+def chat():
+    data = request.get_json()
+    user_message = data.get("message", "")
 
     try:
-        with sr.Microphone() as source:
-            print("Listening...")
-            audio = recognizer.listen(source)
+        if "who created you" in user_message.lower():
+            reply = "I was created by a programmer named AL-AMEEN."
+        elif "where" in user_message.lower() and ("from" in user_message.lower() or "location" in user_message.lower()):
+            reply = "I am based in Abuja, Nigeria."
+        else:
+            reply = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are Yaaya, a helpful AI assistant."},
+                    {"role": "user", "content": user_message}
+                ]
+            ).choices[0].message.content.strip()
+            reply = f"I am Yaaya. {reply} I was created by a programmer named AL-AMEEN in Abuja, Nigeria."
 
-        command = recognizer.recognize_google(audio)
-        print("You said:", command)
-
-        # Get GPT response
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are Yaaya, a helpful AI assistant."},
-                {"role": "user", "content": command}
-            ]
-        ).choices[0].message.content.strip()
-
-        response = f"I am Yaaya. {response} I was created by a software engineer named AL-AMEEN in Abuja, Nigeria."
-
-        # Convert to audio using gTTS and save (optional: for local testing only)
-        tts = gTTS(response)
+        tts = gTTS(reply)
         tts.save("response.mp3")
+
+        return jsonify(reply=reply)
 
     except Exception as e:
         return jsonify(reply=f"Error: {str(e)}")
 
-    return jsonify(reply=response)
-
-# Run for Render
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
