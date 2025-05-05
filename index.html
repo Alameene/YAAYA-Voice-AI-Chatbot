@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>YAAYA - Voice Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #0f0f0f, #1f1f1f);
+      color: #00fff7;
+      font-family: 'Orbitron', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      background: #00fff7;
+      color: black;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      background: #00b3ad;
+    }
+    #response {
+      margin-top: 20px;
+      max-width: 500px;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 YAAYA AI Assistant</h1>
+  <button onclick="startListening()">🎤 Speak</button>
+  <div id="response">Click the button and start speaking!</div>
+
+  <script>
+    function startListening() {
+      fetch('/listen')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('response').innerText = data.reply;
+        })
+        .catch(error => {
+          document.getElementById('response').innerText = "Error: " + error;
+        });
+    }
+  </script>
+</body>
+</html>
