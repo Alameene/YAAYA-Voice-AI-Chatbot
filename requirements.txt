@@ -2,3 +2,4 @@ Flask
 openai
 pyttsx3
 SpeechRecognition
+gunicorn
