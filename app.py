@@ -5,7 +5,7 @@ import openai
 
 # Initialize OpenAI client with updated system prompt
 client = openai.OpenAI(
-    api_key=os.getenv("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")
+    api_key=os.getenv("*******")
 )
 
 app = Flask(__name__)
