@@ -3,9 +3,9 @@ from flask import Flask, jsonify, request, send_from_directory
 from gtts import gTTS
 import openai
 
-# Initialize OpenAI client using the new API format and making sure it works on Render
+# Initialize OpenAI client with updated system prompt
 client = openai.OpenAI(
-    api_key=os.getenv("0492Lamanee.")  # Ensure this is set in your Render environment
+    api_key=os.getenv("OPENAI_API_KEY")
 )
 
 app = Flask(__name__)
@@ -20,31 +20,37 @@ def chat():
     user_message = data.get("message", "")
 
     try:
-        # Predefined responses
-        if "who created you" in user_message.lower():
+        # Intent for creator and location
+        msg_lower = user_message.lower()
+        if "who created you" in msg_lower:
             reply = "I was created by a programmer named AL-AMEEN."
-        elif "where" in user_message.lower() and ("from" in user_message.lower() or "location" in user_message.lower()):
+        elif "where" in msg_lower and ("from" in msg_lower or "location" in msg_lower):
             reply = "I am based in Abuja, Nigeria."
         else:
-            chat_response = client.chat.completions.create(
+            # Use robust system prompt
+            system_prompt = (
+                "You are Yaaya, the first Chatbot of AIMEES WD (Advanced Innovation in "
+                "Machine Learning Encryption and Expert Systems World's developer), "
+                "created by AL-AMEEN in Abuja, Nigeria."            )
+            response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are Yaaya, a helpful AI assistant."},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message}
                 ]
             )
+            content = response.choices[0].message.content.strip()
+            reply = f"I am Yaaya. {content} I was created by a programmer named AL-AMEEN in Abuja, Nigeria."
 
-            response_content = chat_response.choices[0].message.content.strip()
-            reply = f"I am Yaaya. {response_content} I was created by a programmer named AL-AMEEN in Abuja, Nigeria."
-
-        # Generate audio response (optional)
-        tts = gTTS(reply)
+        # Generate TTS audio
+        tts = gTTS(text=reply)
         tts.save("response.mp3")
 
         return jsonify(reply=reply)
 
     except Exception as e:
-        return jsonify(reply=f"Error: {str(e)}")
+        # Return error field for styled display
+        return jsonify(error=str(e)), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
