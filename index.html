@@ -11,116 +11,107 @@
       text-align: center;
       padding: 2rem;
     }
-    h1 {
-      color: #00d1ff;
-    }
+    h1 { color: #00d1ff; }
     #chat-log {
-      width: 100%;
-      max-width: 600px;
-      margin: 2rem auto;
-      padding: 1rem;
-      background-color: #2c2c2c;
-      border-radius: 10px;
-      height: 300px;
-      overflow-y: auto;
+      width: 100%; max-width: 600px;
+      margin: 2rem auto; padding: 1rem;
+      background: #2c2c2c; border-radius: 10px;
+      height: 300px; overflow-y: auto;
       text-align: left;
     }
-    .chat-entry {
-      margin-bottom: 1rem;
-    }
-    .input-area {
-      margin-top: 1.5rem;
-    }
+    .chat-entry { margin-bottom: 1rem; }
+    .input-area { margin-top: 1.5rem; }
     input[type="text"] {
-      padding: 0.5rem;
-      width: 60%;
-      border-radius: 5px;
-      border: none;
-      font-size: 1rem;
+      padding: 0.5rem; width: 60%; border-radius: 5px;
+      border: none; font-size: 1rem;
     }
     button {
-      background-color: #00d1ff;
-      color: black;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 5px;
-      font-size: 1rem;
-      cursor: pointer;
-      margin-left: 1rem;
+      background: #00d1ff; color: black; padding: 10px 20px;
+      border: none; border-radius: 5px; font-size: 1rem;
+      cursor: pointer; margin-left: 0.5rem;
     }
-    button:hover {
-      background-color: #00a6cc;
-    }
+    button:hover { background: #00a6cc; }
+    /* Typing animation */
+    @keyframes blink { 0%,100% { opacity:0; } 50% { opacity:1; }}
+    .typing { display:inline-block; }
+    .typing span { animation: blink 1s infinite; margin-right:2px; }
+    .typing span:nth-child(2) { animation-delay:0.2s; }
+    .typing span:nth-child(3) { animation-delay:0.4s; }
+    /* Error style */
+    .error { color: #ff4d4f; font-style: italic; }
   </style>
 </head>
 <body>
   <h1>Meet YAAYA 🤖</h1>
-  <p>Type your message or speak below:</p>
+  <p>Communicate by speech or text:</p>
 
   <div id="chat-log"></div>
 
   <div class="input-area">
     <input type="text" id="user-input" placeholder="Ask Yaaya anything...">
     <button onclick="sendMessage()">Send</button>
-    <button onclick="startVoiceInput()">🎤 Speak</button>
+    <button onclick="startVoice()">🎤 Speak</button>
   </div>
 
   <script>
-    function addToChatLog(message, fromYaaya = false) {
-      const log = document.getElementById('chat-log');
+    const log = document.getElementById('chat-log');
+
+    function addEntry(text, speaker='Yaaya', type='message') {
       const entry = document.createElement('div');
       entry.classList.add('chat-entry');
-      entry.innerHTML = `<strong>${fromYaaya ? "YAAYA" : "You"}:</strong> ${message}`;
+      if(type === 'error') entry.classList.add('error');
+      let content = '';
+      if(type === 'typing') {
+        content = `<strong>${speaker}:</strong> <span class="typing"><span>.</span><span>.</span><span>.</span></span>`;
+      } else {
+        content = `<strong>${speaker}:</strong> ${text}`;
+      }
+      entry.innerHTML = content;
       log.appendChild(entry);
       log.scrollTop = log.scrollHeight;
     }
 
+    function clearTyping() {
+      const entries = Array.from(log.getElementsByClassName('typing'));
+      entries.forEach(el => el.closest('.chat-entry').remove());
+    }
+
     function sendMessage() {
       const input = document.getElementById('user-input');
-      const message = input.value.trim();
-      if (!message) return;
-
-      addToChatLog(message, false);
-      input.value = "";
-      addToChatLog("<em>Yaaya is typing...</em>", true);
+      const msg = input.value.trim();
+      if(!msg) return;
+      addEntry(msg, 'You');
+      input.value = '';
+      addEntry('', 'Yaaya', 'typing');
 
       fetch('/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message })
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({message: msg})
       })
-      .then(response => response.json())
+      .then(res => res.json())
       .then(data => {
-        // Remove typing animation before adding final reply
-        const log = document.getElementById('chat-log');
-        log.removeChild(log.lastChild);
-        addToChatLog(data.reply, true);
+        clearTyping();
+        if(data.error) addEntry(data.error, 'Yaaya', 'error');
+        else addEntry(data.reply, 'Yaaya');
       })
-      .catch(error => addToChatLog("Error: " + error, true));
+      .catch(err => { clearTyping(); addEntry(err.toString(), 'Yaaya', 'error'); });
     }
 
-    function startVoiceInput() {
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recognition.lang = 'en-US';
-      recognition.interimResults = false;
-
+    function startVoice() {
+      const recognition = new (window.SpeechRecognition||window.webkitSpeechRecognition)();
+      recognition.lang = 'en-US'; recognition.interimResults = false;
       recognition.start();
-      addToChatLog("🎤 Listening...", false);
-
-      recognition.onresult = function(event) {
-        const transcript = event.results[0][0].transcript;
-        document.getElementById('user-input').value = transcript;
+      addEntry('', 'You', 'typing');
+      recognition.onresult = e => {
+        clearTyping();
+        const speech = e.results[0][0].transcript;
+        addEntry(speech, 'You');
         sendMessage();
       };
-
-      recognition.onerror = function(event) {
-        addToChatLog("Speech recognition error: " + event.error, true);
-      };
+      recognition.onerror = e => { clearTyping(); addEntry(e.error, 'Yaaya', 'error'); };
     }
 
-    window.onload = function () {
-      addToChatLog("I am Yaaya, how can I help you?", true);
-    };
+    window.onload = () => addEntry('I am Yaaya, how can I help you?', 'Yaaya');
   </script>
 </body>
 </html>
