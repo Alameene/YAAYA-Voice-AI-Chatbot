@@ -4,7 +4,7 @@ from gtts import gTTS
 import openai
 
 # Initialize OpenAI client with updated system prompt
-client = openai.OpenAI(
+client = gemini.Gemini(
     api_key=os.getenv("*******")
 )
 
